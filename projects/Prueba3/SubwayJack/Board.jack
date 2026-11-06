@@ -1,0 +1,188 @@
+// File: Board.jack
+// Board draws the static scenery (play field frame, dotted lane dividers,
+// thick side borders, decorative posts) and the HUD panels (frames + text).
+//
+// LAYOUT CONSTANTS (screen is 512x256; x:0..511, y:0..255).
+// All values are precomputed literals/statics so NO integer division happens
+// at run time (division is costly on the Hack platform).
+//
+//   Play field : x 128..383 (256 px wide), y 0..255 (full height).
+//   Side panels: left HUD x 0..127, right HUD x 384..511.
+//
+//   3 vertical lanes inside the play field (drawn between dividers):
+//     lane 0 (left)  : x 131..208   center ~ 170
+//     lane 1 (center): x 213..298   center ~ 256
+//     lane 2 (right) : x 303..380   center ~ 341
+//   Divider lines sit at x = 210 and x = 300.
+//
+// Output text grid: 64 columns x 23 rows, each cell 8 px wide x 11 px tall.
+//   left panel  columns 0..15  (0..127 px)
+//   right panel columns 48..63 (384..511 px)
+
+class Board {
+    // --- Play field bounds ---
+    field int FIELD_LEFT;      // 128
+    field int FIELD_RIGHT;     // 383
+    field int FIELD_TOP;       // 0
+    field int FIELD_BOTTOM;    // 255
+
+    // --- Lane divider x positions ---
+    field int DIV1_X;          // 210  (between lane 0 and lane 1)
+    field int DIV2_X;          // 300  (between lane 1 and lane 2)
+
+    // --- Side panel bounds ---
+    field int LEFT_PANEL_R;    // 127  (right edge of left HUD)
+    field int RIGHT_PANEL_L;   // 384  (left edge of right HUD)
+
+    /** Builds the Board and initializes the layout constants.
+     *  Returns: the new Board. */
+    constructor Board new() {
+        let FIELD_LEFT = 128;
+        let FIELD_RIGHT = 383;
+        let FIELD_TOP = 0;
+        let FIELD_BOTTOM = 255;
+
+        let DIV1_X = 210;
+        let DIV2_X = 300;
+
+        let LEFT_PANEL_R = 127;
+        let RIGHT_PANEL_L = 384;
+        return this;
+    }
+
+    /** Draws the whole static scene a single time (no flicker):
+     *  outer frame, thick side borders, dotted lane dividers, decorative
+     *  posts, and both HUD panels with text.
+     *  Returns: void. */
+    method void draw() {
+        do Screen.setColor(true);
+
+        do drawField();
+        do drawSideBorders();
+        do drawLaneDividers();
+        do drawPosts();
+        do drawHud();
+        return;
+    }
+
+    /** Outer rectangular frame around the play field.
+     *  Drawn as four thin lines (not a filled rectangle) so the interior
+     *  stays black. Returns: void. */
+    method void drawField() {
+        do Screen.drawLine(FIELD_LEFT, FIELD_TOP, FIELD_RIGHT, FIELD_TOP);
+        do Screen.drawLine(FIELD_LEFT, FIELD_BOTTOM, FIELD_RIGHT, FIELD_BOTTOM);
+        do Screen.drawLine(FIELD_LEFT, FIELD_TOP, FIELD_LEFT, FIELD_BOTTOM);
+        do Screen.drawLine(FIELD_RIGHT, FIELD_TOP, FIELD_RIGHT, FIELD_BOTTOM);
+        return;
+    }
+
+    /** Thick vertical borders on both inner edges of the play field.
+     *  Two filled rectangles, 3 px wide, framing the lanes.
+     *  Returns: void. */
+    method void drawSideBorders() {
+        // Left thick border (x 128..130)
+        do Screen.drawRectangle(FIELD_LEFT, FIELD_TOP, FIELD_LEFT + 2, FIELD_BOTTOM);
+        // Right thick border (x 381..383)
+        do Screen.drawRectangle(FIELD_RIGHT - 2, FIELD_TOP, FIELD_RIGHT, FIELD_BOTTOM);
+        return;
+    }
+
+    /** Dotted vertical dividers between the three lanes.
+     *  Each divider is drawn with a while loop: short 8 px segments followed
+     *  by 8 px gaps, giving a dashed "road marking" look.
+     *  Returns: void. */
+    method void drawLaneDividers() {
+        do drawDottedVertical(DIV1_X);
+        do drawDottedVertical(DIV2_X);
+        return;
+    }
+
+    /** Draws one dashed vertical line at column x from top to bottom.
+     *  Segment length 8 px, gap 8 px (period 16). No division or modulo used.
+     *  Params: x = screen column for the dashed line.
+     *  Returns: void. */
+    method void drawDottedVertical(int x) {
+        var int y;
+        let y = FIELD_TOP;
+        while (y < FIELD_BOTTOM) {
+            // Draw an 8 px dash (clamp so we never exceed FIELD_BOTTOM).
+            if ((y + 7) < FIELD_BOTTOM) {
+                do Screen.drawLine(x, y, x, y + 7);
+            } else {
+                do Screen.drawLine(x, y, x, FIELD_BOTTOM);
+            }
+            let y = y + 16;   // advance one dash + one gap
+        }
+        return;
+    }
+
+    /** Decorative "fence posts": small 4x6 filled rectangles stacked along
+     *  both inner edges of the field, giving a track-side detail.
+     *  Posts are spaced every 32 px. No division/modulo used.
+     *  Returns: void. */
+    method void drawPosts() {
+        var int y;
+        let y = 10;
+        while (y < 240) {
+            // Left side posts (just inside the left thick border).
+            do Screen.drawRectangle(FIELD_LEFT + 4, y, FIELD_LEFT + 7, y + 5);
+            // Right side posts (just inside the right thick border).
+            do Screen.drawRectangle(FIELD_RIGHT - 7, y, FIELD_RIGHT - 4, y + 5);
+            let y = y + 32;
+        }
+        return;
+    }
+
+    /** Draws both HUD panels: a frame around each one plus the static text
+     *  (title, score, lives, level and the control legend).
+     *  Text is placed with Output on the 64x23 cell grid so every string
+     *  stays inside its panel. Returns: void. */
+    method void drawHud() {
+        // --- Left panel frame (x 2..125, y 2..253) ---
+        do Screen.drawLine(2, 2, LEFT_PANEL_R - 2, 2);
+        do Screen.drawLine(2, 253, LEFT_PANEL_R - 2, 253);
+        do Screen.drawLine(2, 2, 2, 253);
+        do Screen.drawLine(LEFT_PANEL_R - 2, 2, LEFT_PANEL_R - 2, 253);
+
+        // --- Right panel frame (x 386..509, y 2..253) ---
+        do Screen.drawLine(RIGHT_PANEL_L + 2, 2, 509, 2);
+        do Screen.drawLine(RIGHT_PANEL_L + 2, 253, 509, 253);
+        do Screen.drawLine(RIGHT_PANEL_L + 2, 2, RIGHT_PANEL_L + 2, 253);
+        do Screen.drawLine(509, 2, 509, 253);
+
+        // --- Left panel text (columns 1..14) ---
+        do Output.moveCursor(1, 4);
+        do Output.printString("SUBWAY");
+        do Output.moveCursor(2, 5);
+        do Output.printString("JACK");
+
+        do Output.moveCursor(5, 1);
+        do Output.printString("PUNTOS: 0");
+        do Output.moveCursor(7, 1);
+        do Output.printString("VIDAS: 3");
+        do Output.moveCursor(9, 1);
+        do Output.printString("NIVEL: 1");
+
+        // --- Right panel text (columns 48..62) ---
+        do Output.moveCursor(1, 50);
+        do Output.printString("CONTROLES");
+        do Output.moveCursor(3, 49);
+        do Output.printString("A/D: mover");
+        do Output.moveCursor(5, 49);
+        do Output.printString("Q: salir");
+        do Output.moveCursor(8, 49);
+        do Output.printString("HITO 1:");
+        do Output.moveCursor(9, 49);
+        do Output.printString("RENDER");
+        do Output.moveCursor(10, 49);
+        do Output.printString("ESTATICO");
+        return;
+    }
+
+    /** Releases the Board. It owns no sub-objects, so it only frees itself.
+     *  Returns: void. */
+    method void dispose() {
+        do Memory.deAlloc(this);
+        return;
+    }
+}

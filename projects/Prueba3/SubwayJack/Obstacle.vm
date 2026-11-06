@@ -1,0 +1,411 @@
+function Obstacle.new 0
+push constant 6
+call Memory.alloc 1
+pop pointer 0
+push argument 0
+pop this 4
+push argument 1
+pop this 1
+push argument 2
+pop this 5
+push this 5
+push constant 1
+eq
+if-goto IF_TRUE0
+goto IF_FALSE0
+label IF_TRUE0
+push constant 48
+pop this 2
+push constant 60
+pop this 3
+goto IF_END0
+label IF_FALSE0
+push this 5
+push constant 2
+eq
+if-goto IF_TRUE1
+goto IF_FALSE1
+label IF_TRUE1
+push constant 24
+pop this 2
+push constant 26
+pop this 3
+goto IF_END1
+label IF_FALSE1
+push constant 56
+pop this 2
+push constant 18
+pop this 3
+label IF_END1
+label IF_END0
+push pointer 0
+push argument 0
+call Obstacle.laneCenter 2
+push this 2
+push constant 2
+call Math.divide 2
+sub
+pop this 0
+push pointer 0
+return
+function Obstacle.laneCenter 0
+push argument 0
+pop pointer 0
+push argument 1
+push constant 0
+eq
+if-goto IF_TRUE0
+goto IF_FALSE0
+label IF_TRUE0
+push constant 170
+return
+label IF_FALSE0
+push argument 1
+push constant 2
+eq
+if-goto IF_TRUE1
+goto IF_FALSE1
+label IF_TRUE1
+push constant 341
+return
+label IF_FALSE1
+push constant 256
+return
+function Obstacle.draw 0
+push argument 0
+pop pointer 0
+push constant 0
+not
+call Screen.setColor 1
+pop temp 0
+push this 5
+push constant 1
+eq
+if-goto IF_TRUE0
+goto IF_FALSE0
+label IF_TRUE0
+push pointer 0
+call Obstacle.drawTrain 1
+pop temp 0
+goto IF_END0
+label IF_FALSE0
+push this 5
+push constant 2
+eq
+if-goto IF_TRUE1
+goto IF_FALSE1
+label IF_TRUE1
+push pointer 0
+call Obstacle.drawCone 1
+pop temp 0
+goto IF_END1
+label IF_FALSE1
+push pointer 0
+call Obstacle.drawBarrier 1
+pop temp 0
+label IF_END1
+label IF_END0
+push constant 0
+return
+function Obstacle.drawBarrier 2
+push argument 0
+pop pointer 0
+push this 0
+push this 1
+push this 0
+push this 2
+add
+push this 1
+call Screen.drawLine 4
+pop temp 0
+push this 0
+push this 1
+push this 3
+add
+push this 0
+push this 2
+add
+push this 1
+push this 3
+add
+call Screen.drawLine 4
+pop temp 0
+push this 0
+push this 1
+push this 0
+push this 1
+push this 3
+add
+call Screen.drawLine 4
+pop temp 0
+push this 0
+push this 2
+add
+push this 1
+push this 0
+push this 2
+add
+push this 1
+push this 3
+add
+call Screen.drawLine 4
+pop temp 0
+push constant 0
+pop local 0
+label WHILE_EXP0
+push local 0
+push this 2
+lt
+not
+if-goto WHILE_END0
+push this 0
+push local 0
+add
+push this 3
+add
+pop local 1
+push local 1
+push this 0
+push this 2
+add
+gt
+if-goto IF_TRUE0
+goto IF_FALSE0
+label IF_TRUE0
+push this 0
+push this 2
+add
+pop local 1
+label IF_FALSE0
+push this 0
+push local 0
+add
+push this 1
+push this 3
+add
+push local 1
+push this 1
+call Screen.drawLine 4
+pop temp 0
+push local 0
+push constant 8
+add
+pop local 0
+goto WHILE_EXP0
+label WHILE_END0
+push constant 0
+return
+function Obstacle.drawTrain 2
+push argument 0
+pop pointer 0
+push this 0
+push this 1
+push this 0
+push this 2
+add
+push this 1
+push this 3
+add
+call Screen.drawRectangle 4
+pop temp 0
+push constant 0
+call Screen.setColor 1
+pop temp 0
+push this 1
+push constant 8
+add
+pop local 0
+label WHILE_EXP0
+push local 0
+push this 1
+push constant 40
+add
+lt
+not
+if-goto WHILE_END0
+push this 0
+push constant 6
+add
+pop local 1
+label WHILE_EXP1
+push local 1
+push this 0
+push this 2
+add
+push constant 6
+sub
+lt
+not
+if-goto WHILE_END1
+push local 1
+push local 0
+push local 1
+push constant 8
+add
+push local 0
+push constant 8
+add
+call Screen.drawRectangle 4
+pop temp 0
+push local 1
+push constant 16
+add
+pop local 1
+goto WHILE_EXP1
+label WHILE_END1
+push local 0
+push constant 20
+add
+pop local 0
+goto WHILE_EXP0
+label WHILE_END0
+push constant 0
+not
+call Screen.setColor 1
+pop temp 0
+push this 0
+push this 1
+push this 3
+add
+push constant 8
+sub
+push this 0
+push this 2
+add
+push this 1
+push this 3
+add
+push constant 8
+sub
+call Screen.drawLine 4
+pop temp 0
+push constant 0
+return
+function Obstacle.drawCone 2
+push argument 0
+pop pointer 0
+push this 0
+push this 2
+push constant 2
+call Math.divide 2
+add
+pop local 0
+push this 1
+push this 3
+add
+push constant 4
+sub
+pop local 1
+push local 0
+push this 1
+push this 0
+push constant 2
+add
+push local 1
+call Screen.drawLine 4
+pop temp 0
+push local 0
+push this 1
+push this 0
+push this 2
+add
+push constant 2
+sub
+push local 1
+call Screen.drawLine 4
+pop temp 0
+push this 0
+push constant 2
+add
+push local 1
+push this 0
+push this 2
+add
+push constant 2
+sub
+push local 1
+call Screen.drawLine 4
+pop temp 0
+push this 0
+push local 1
+push this 0
+push this 2
+add
+push this 1
+push this 3
+add
+call Screen.drawRectangle 4
+pop temp 0
+push this 0
+push constant 6
+add
+push this 1
+push constant 14
+add
+push this 0
+push this 2
+add
+push constant 6
+sub
+push this 1
+push constant 14
+add
+call Screen.drawLine 4
+pop temp 0
+push constant 0
+return
+function Obstacle.erase 0
+push argument 0
+pop pointer 0
+push constant 0
+call Screen.setColor 1
+pop temp 0
+push this 0
+push this 1
+push this 0
+push this 2
+add
+push this 1
+push this 3
+add
+call Screen.drawRectangle 4
+pop temp 0
+push constant 0
+not
+call Screen.setColor 1
+pop temp 0
+push constant 0
+return
+function Obstacle.getX 0
+push argument 0
+pop pointer 0
+push this 0
+return
+function Obstacle.getY 0
+push argument 0
+pop pointer 0
+push this 1
+return
+function Obstacle.getWidth 0
+push argument 0
+pop pointer 0
+push this 2
+return
+function Obstacle.getHeight 0
+push argument 0
+pop pointer 0
+push this 3
+return
+function Obstacle.getLane 0
+push argument 0
+pop pointer 0
+push this 4
+return
+function Obstacle.dispose 0
+push argument 0
+pop pointer 0
+push pointer 0
+call Memory.deAlloc 1
+pop temp 0
+push constant 0
+return

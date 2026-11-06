@@ -1,0 +1,106 @@
+// File: Player.jack
+// Player is the controllable character, drawn only with Screen primitives.
+// It is a composite sprite: rectangular body, round head, a cap detail,
+// a backpack, plus line arms and legs.
+//
+// Coordinates: (x, y) is the TOP-LEFT corner of the sprite's bounding box.
+// The bounding box is WIDTH x HEIGHT, used both for erase() and (in
+// MILESTONE 2) for AABB collision.
+//
+// Lane geometry (must match Board):
+//   lane 0 center ~ 170, lane 1 center ~ 256, lane 2 center ~ 341.
+// The player sits near the BOTTOM of the play field.
+
+class Player {
+    field int x;        // top-left x of bounding box
+    field int y;        // top-left y of bounding box
+    field int width;    // bounding box width
+    field int height;   // bounding box height
+    field int lane;     // 0=left, 1=center, 2=right
+
+    /** Creates the player on the given starting lane, placed near the bottom.
+     *  Params: startLane = 0 (left), 1 (center) or 2 (right).
+     *  The sprite is 24x40; x is derived from the lane center so the sprite
+     *  is horizontally centered in its lane. Returns: the new Player. */
+    constructor Player new(int startLane) {
+        let lane = startLane;
+        let width = 24;
+        let height = 40;
+
+        // Center the 24-wide sprite on the chosen lane center.
+        // lane centers: 170 / 256 / 341  ->  x = center - 12.
+        let x = laneCenter(startLane) - 12;
+        // Bottom placement: box top-left y so the feet are near y=250.
+        let y = 250 - height;    // 210
+
+        return this;
+    }
+
+    /** Returns the horizontal center (px) of a lane.
+     *  Precomputed constants, no division at run time.
+     *  Params: laneIndex = 0..2. Returns: center x in pixels. */
+    method int laneCenter(int laneIndex) {
+        if (laneIndex = 0) { return 170; }
+        if (laneIndex = 2) { return 341; }
+        return 256;   // lane 1 (center) and default
+    }
+
+    /** Draws the composite character sprite at (x, y) in white.
+     *  Pure drawing: never erases or changes state besides the pen color.
+     *  Returns: void. */
+    method void draw() {
+        var int cx;     // horizontal center of the sprite
+        var int headCy; // head center y
+
+        do Screen.setColor(true);
+        let cx = x + 12;        // width/2 = 12 (precomputed)
+        let headCy = y + 9;
+
+        // Head (circle) and cap (small filled rectangle on top of the head).
+        do Screen.drawCircle(cx, headCy, 7);
+        do Screen.drawRectangle(cx - 8, y + 1, cx + 8, y + 4);   // cap brim
+
+        // Body (torso rectangle).
+        do Screen.drawRectangle(x + 4, y + 17, x + 19, y + 32);
+
+        // Backpack detail (small rectangle behind the torso, left side).
+        do Screen.drawRectangle(x, y + 19, x + 3, y + 29);
+
+        // Arms (lines from shoulders down the sides).
+        do Screen.drawLine(x + 4, y + 18, x, y + 28);
+        do Screen.drawLine(x + 19, y + 18, x + 23, y + 28);
+
+        // Legs (two lines from the hips to the feet).
+        do Screen.drawLine(x + 8, y + 32, x + 8, y + 39);
+        do Screen.drawLine(x + 15, y + 32, x + 15, y + 39);
+        return;
+    }
+
+    /** Erases the player by filling its whole bounding box with black.
+     *  Decoupled from draw(): sets black, fills the box, restores white.
+     *  Returns: void. */
+    method void erase() {
+        do Screen.setColor(false);
+        do Screen.drawRectangle(x, y, x + width, y + height);
+        do Screen.setColor(true);
+        return;
+    }
+
+    /** Getter: bounding-box top-left x. */
+    method int getX() { return x; }
+    /** Getter: bounding-box top-left y. */
+    method int getY() { return y; }
+    /** Getter: bounding-box width. */
+    method int getWidth() { return width; }
+    /** Getter: bounding-box height. */
+    method int getHeight() { return height; }
+    /** Getter: current lane index (0..2). */
+    method int getLane() { return lane; }
+
+    /** Releases the Player. Owns no sub-objects, frees only itself.
+     *  Returns: void. */
+    method void dispose() {
+        do Memory.deAlloc(this);
+        return;
+    }
+}

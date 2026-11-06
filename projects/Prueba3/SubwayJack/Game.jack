@@ -1,0 +1,92 @@
+// File: Game.jack
+// Game orchestrates MILESTONE 1. It owns the Board, the Player and a small
+// array of sample Obstacles placed in different lanes and heights.
+//
+// This milestone performs a SINGLE static render pass (no game loop, no
+// movement, no collisions). The architecture (fields + getters on Player and
+// Obstacle) is already prepared so MILESTONE 2 can add motion and AABB
+// collision without redesigning anything.
+
+class Game {
+    field Board board;              // scenery + HUD
+    field Player player;            // the controllable character (bottom center)
+    field Array obstacles;          // array of Obstacle objects (sample set)
+    field int obstacleCount;        // number of obstacles actually created
+
+    /** Builds the game world: board, player (center lane, bottom) and a
+     *  small set of sample obstacles distributed across lanes/heights.
+     *  Returns: the new Game. */
+    constructor Game new() {
+        var Obstacle o;
+
+        let board = Board.new();
+        // Player starts on the central lane (lane 1), drawn at the bottom.
+        let player = Player.new(1);
+
+        // Sample obstacles: 4 pieces, different lanes, heights and types.
+        // Signature: Obstacle.new(int lane, int y, int type)
+        //   type 0 = low barrier, 1 = big train/block, 2 = cone.
+        let obstacleCount = 4;
+        let obstacles = Array.new(obstacleCount);
+
+        let o = Obstacle.new(0, 30, 2);     // left lane, high, cone
+        let obstacles[0] = o;
+        let o = Obstacle.new(2, 55, 0);     // right lane, barrier
+        let obstacles[1] = o;
+        let o = Obstacle.new(1, 90, 1);     // center lane, big train
+        let obstacles[2] = o;
+        let o = Obstacle.new(0, 150, 0);    // left lane, lower barrier
+        let obstacles[3] = o;
+
+        return this;
+    }
+
+    /** Renders the whole scene exactly once and waits for a key to finish.
+     *  Draw order: board first (background/frame), then obstacles, then the
+     *  player on top. No redraw loop, so there is no flicker.
+     *  Returns: void. */
+    method void run() {
+        var char key;
+        var int i;
+        var Obstacle o;
+
+        // 1) Scenery and HUD (drawn a single time).
+        do board.draw();
+
+        // 2) Sample obstacles.
+        let i = 0;
+        while (i < obstacleCount) {
+            let o = obstacles[i];
+            do o.draw();
+            let i = i + 1;
+        }
+
+        // 3) Player on top of the lanes.
+        do player.draw();
+
+        // Wait for any key so the static scene stays on screen.
+        let key = Keyboard.readChar();
+        return;
+    }
+
+    /** Releases everything the Game owns: every Obstacle, the array itself,
+     *  the Player, the Board, and finally this object.
+     *  Returns: void. */
+    method void dispose() {
+        var int i;
+        var Obstacle o;
+
+        let i = 0;
+        while (i < obstacleCount) {
+            let o = obstacles[i];
+            do o.dispose();
+            let i = i + 1;
+        }
+        do obstacles.dispose();
+        do player.dispose();
+        do board.dispose();
+
+        do Memory.deAlloc(this);
+        return;
+    }
+}

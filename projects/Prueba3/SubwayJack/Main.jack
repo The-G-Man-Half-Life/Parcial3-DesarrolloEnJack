@@ -1,0 +1,21 @@
+// File: Main.jack
+// Subway Jack - Retro 2D endless-runner (top-down, 3 lanes).
+// MILESTONE 1: static rendering only (board + initial graphic objects).
+//
+// Main is the program entry point. It creates the Game orchestrator,
+// renders the scene once, waits for a key, and then releases memory.
+
+class Main {
+
+    /** Program entry point.
+     *  Creates the Game, runs the single static render pass, and disposes it.
+     *  Returns: void. */
+    function void main() {
+        var Game game;
+
+        let game = Game.new();   // build board, player and sample obstacles
+        do game.run();           // draw everything once, wait for a key
+        do game.dispose();       // free Game and everything it owns
+        return;
+    }
+}

@@ -1,0 +1,180 @@
+// File: Obstacle.jack
+// Obstacle is a hazard drawn only with Screen primitives. Three visually
+// distinct types are supported:
+//   type 0 = low barrier  : wide short rectangle with diagonal stripes.
+//   type 1 = big train/block: tall rectangle with windows and body lines.
+//   type 2 = cone         : triangle (lines) over a small base rectangle.
+//
+// Coordinates: (x, y) is the TOP-LEFT corner of the bounding box, size
+// WIDTH x HEIGHT. x is derived from the lane so the sprite is centered in
+// its lane. The bounding box feeds erase() and (MILESTONE 2) AABB collision.
+//
+// Lane centers (match Board/Player): 170 / 256 / 341.
+
+class Obstacle {
+    field int x;        // top-left x of bounding box
+    field int y;        // top-left y of bounding box
+    field int width;    // bounding box width
+    field int height;   // bounding box height
+    field int lane;     // 0=left, 1=center, 2=right
+    field int type;     // 0=barrier, 1=train, 2=cone
+
+    /** Creates an obstacle in the given lane, at vertical position y, of the
+     *  given type. Size depends on the type; x is computed from the lane
+     *  center so the sprite is horizontally centered.
+     *  Params: aLane = 0..2, aY = top-left y, aType = 0..2.
+     *  Returns: the new Obstacle. */
+    constructor Obstacle new(int aLane, int aY, int aType) {
+        let lane = aLane;
+        let y = aY;
+        let type = aType;
+
+        // Size per type (precomputed; no division at run time).
+        if (type = 1) {            // big train/block
+            let width = 48;
+            let height = 60;
+        } else {
+            if (type = 2) {        // cone
+                let width = 24;
+                let height = 26;
+            } else {               // barrier (type 0 and default)
+                let width = 56;
+                let height = 18;
+            }
+        }
+
+        // Center the sprite on its lane: x = laneCenter - width/2.
+        // width/2 is computed once here (cheap, build-time-sized values).
+        let x = laneCenter(aLane) - (width / 2);
+        return this;
+    }
+
+    /** Returns the horizontal center (px) of a lane.
+     *  Precomputed constants. Params: laneIndex = 0..2. Returns: center x. */
+    method int laneCenter(int laneIndex) {
+        if (laneIndex = 0) { return 170; }
+        if (laneIndex = 2) { return 341; }
+        return 256;   // lane 1 (center) and default
+    }
+
+    /** Draws the obstacle sprite according to its type, in white.
+     *  Returns: void. */
+    method void draw() {
+        do Screen.setColor(true);
+        if (type = 1) {
+            do drawTrain();
+        } else {
+            if (type = 2) {
+                do drawCone();
+            } else {
+                do drawBarrier();
+            }
+        }
+        return;
+    }
+
+    /** Type 0: low barrier - a short wide rectangle outline with a set of
+     *  diagonal stripes inside (hazard look). Returns: void. */
+    method void drawBarrier() {
+        var int i;       // x offset of the current stripe foot
+        var int top;     // top y of the stripe (clamped inside the box)
+
+        // Outline of the barrier box.
+        do Screen.drawLine(x, y, x + width, y);
+        do Screen.drawLine(x, y + height, x + width, y + height);
+        do Screen.drawLine(x, y, x, y + height);
+        do Screen.drawLine(x + width, y, x + width, y + height);
+
+        // Diagonal hazard stripes every 8 px. Each stripe is a short 45-deg
+        // segment of fixed vertical span (= height), so it always stays
+        // inside the box. Foot at (x+i, bottom), top at (x+i+height, y),
+        // and the top x is clamped to the right edge.
+        let i = 0;
+        while (i < width) {
+            let top = x + i + height;
+            if (top > (x + width)) {
+                let top = x + width;
+            }
+            do Screen.drawLine(x + i, y + height, top, y);
+            let i = i + 8;
+        }
+        return;
+    }
+
+    /** Type 1: big train/block - a filled body with window cut-outs (black)
+     *  and horizontal body lines. Returns: void. */
+    method void drawTrain() {
+        var int wy;   // window row y
+        var int wx;   // window column x
+
+        // Solid body.
+        do Screen.drawRectangle(x, y, x + width, y + height);
+
+        // Windows: punch out black squares (two rows x three columns).
+        do Screen.setColor(false);
+        let wy = y + 8;
+        while (wy < (y + 40)) {
+            let wx = x + 6;
+            while (wx < (x + width - 6)) {
+                do Screen.drawRectangle(wx, wy, wx + 8, wy + 8);
+                let wx = wx + 16;
+            }
+            let wy = wy + 20;
+        }
+
+        // Body detail line near the bottom (back to white).
+        do Screen.setColor(true);
+        do Screen.drawLine(x, y + height - 8, x + width, y + height - 8);
+        return;
+    }
+
+    /** Type 2: cone - a triangle made of lines sitting on a small base
+     *  rectangle, with a mid stripe. Returns: void. */
+    method void drawCone() {
+        var int apexX;
+        var int baseY;
+
+        let apexX = x + (width / 2);   // width/2 computed once
+        let baseY = y + height - 4;
+
+        // Triangle sides.
+        do Screen.drawLine(apexX, y, x + 2, baseY);
+        do Screen.drawLine(apexX, y, x + width - 2, baseY);
+        do Screen.drawLine(x + 2, baseY, x + width - 2, baseY);
+
+        // Base rectangle (the cone's foot).
+        do Screen.drawRectangle(x, baseY, x + width, y + height);
+
+        // Mid stripe across the cone.
+        do Screen.drawLine(x + 6, y + 14, x + width - 6, y + 14);
+        return;
+    }
+
+    /** Erases the obstacle by filling its bounding box with black.
+     *  Decoupled from draw(): set black, fill, restore white.
+     *  Returns: void. */
+    method void erase() {
+        do Screen.setColor(false);
+        do Screen.drawRectangle(x, y, x + width, y + height);
+        do Screen.setColor(true);
+        return;
+    }
+
+    /** Getter: bounding-box top-left x. */
+    method int getX() { return x; }
+    /** Getter: bounding-box top-left y. */
+    method int getY() { return y; }
+    /** Getter: bounding-box width. */
+    method int getWidth() { return width; }
+    /** Getter: bounding-box height. */
+    method int getHeight() { return height; }
+    /** Getter: current lane index (0..2). */
+    method int getLane() { return lane; }
+
+    /** Releases the Obstacle. Owns no sub-objects, frees only itself.
+     *  Returns: void. */
+    method void dispose() {
+        do Memory.deAlloc(this);
+        return;
+    }
+}
